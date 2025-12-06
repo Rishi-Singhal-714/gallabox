@@ -1,6 +1,5 @@
 const { google } = require('googleapis');
 const config = require('./config');
-const EMP_SHEET = "Emp_Status";
 
 async function getSheets() {
   if (!config.GOOGLE_SHEET_ID || !config.SA_JSON_B64) return null;
@@ -188,49 +187,7 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
     return generateTicketId();
   }
 }
-async function getEmployeeStatus(phone) {
-  const sheets = await getSheets();
-  if (!sheets) return { exists: false };
 
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: config.GOOGLE_SHEET_ID,
-    range: `${EMP_SHEET}!A:B`
-  }).catch(() => null);
-
-  const rows = res?.data?.values || [];
-  const idx = rows.findIndex(r => String(r[0]) === phone);
-
-  if (idx === -1) return { exists: false };
-
-  const role = rows[idx][1] || "Normal";
-  return { exists: true, row: idx + 1, role };
-}
-
-async function updateEmployeeRole(phone, role) {
-  const sheets = await getSheets();
-  if (!sheets) return false;
-
-  const status = await getEmployeeStatus(phone);
-
-  if (!status.exists) {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: config.GOOGLE_SHEET_ID,
-      range: `${EMP_SHEET}!A:B`,
-      valueInputOption: "RAW",
-      requestBody: { values: [[phone, role]] }
-    });
-    return true;
-  }
-
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: config.GOOGLE_SHEET_ID,
-    range: `${EMP_SHEET}!B${status.row}`,
-    valueInputOption: "RAW",
-    requestBody: { values: [[role]] }
-  });
-
-  return true;
-}
 module.exports = {
   getSheets,
   colLetter,
@@ -238,7 +195,5 @@ module.exports = {
   appendUnderColumn,
   generateTicketId,
   ensureAgentTicketsHeader,
-  createAgentTicket,
-  getEmployeeStatus,
-  updateEmployeeRole
+  createAgentTicket
 };
