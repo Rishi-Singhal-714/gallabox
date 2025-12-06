@@ -52,7 +52,7 @@ async function sendMessage(to, name, message) {
   }
 }
 
-async function handleEmployeeCommand(sessionId, userMessage) {
+function handleEmployeeCommand(sessionId, userMessage) {
   const cmd = (userMessage || "").trim();
   const regex = /^change\s+(\d+)\s+to\s+(normal|employee)\s*,?\s*pass\s+(\S+)/i;
   const match = cmd.match(regex);
@@ -61,13 +61,19 @@ async function handleEmployeeCommand(sessionId, userMessage) {
   const [, phoneRaw, role, pass] = match;
   const phone = phoneRaw.replace(/\D/g, "");
 
-  if (pass !== config.EMPLOYEE_STATUS_PASS) {
-    return "❌ Incorrect password.";
+  if (pass !== config.EMPLOYEE_STATUS_PASS) return "❌ Incorrect password.";
+
+  if (!config.EMPLOYEE_NUMBERS.includes(phone)) {
+    return `⚠️ ${phone} is not in employee list.`;
   }
 
-  await googleSheets.updateEmployeeRole(phone, role === "employee" ? "Employee" : "Normal");
+  if (role.toLowerCase() === "normal") {
+    config.EMPLOYEE_FLAGS[phone] = false;
+    return `✔ ${phone} switched to *Normal Mode*`;
+  }
 
-  return `✔ ${phone} switched to *${role === "employee" ? "Employee Mode" : "Normal Mode"}*`;
+  delete config.EMPLOYEE_FLAGS[phone];
+  return `✔ ${phone} switched to *Employee Mode*`;
 }
 
 function recentHistoryContainsProductSignal(conversationHistory = []) {
@@ -93,11 +99,11 @@ async function getChatGPTResponse(sessionId, userMessage, galleriesData, sellers
 
     const cmdReply = handleEmployeeCommand(sessionId, userMessage);
     if (cmdReply) return cmdReply;
-    const phone = sessionId.replace(/\D/g, "");
-    const status = await googleSheets.getEmployeeStatus(phone);
-    const isEmployee = status.exists && status.role === "Employee";
-    
-    if (isEmployee) {
+
+    const isInList = config.EMPLOYEE_NUMBERS.includes(sessionId);
+    const isDisabled = config.EMPLOYEE_FLAGS[sessionId] === false;
+
+    if (isInList && !isDisabled) {
       console.log("⚡ Employee mode active", sessionId);
       const employeeHandled = await preIntentFilter(
         config.openai,
