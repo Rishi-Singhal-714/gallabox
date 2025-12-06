@@ -53,6 +53,8 @@ High intent customers, fast logistics, frictionless onboarding.
 zulu.club + Zulu Club apps (Android + iOS).`;
 
 // Employee configuration
+const EMPLOYEE_NUMBERS = [""];
+const EMPLOYEE_FLAGS = {};
 const EMPLOYEE_STATUS_PASS = process.env.EMPLOYEE_STATUS_PASS || "";
 
 // Voice AI Form
@@ -68,6 +70,8 @@ module.exports = {
   ZULU_CLUB_INFO,
   INVESTOR_KNOWLEDGE,
   SELLER_KNOWLEDGE,
+  EMPLOYEE_NUMBERS,
+  EMPLOYEE_FLAGS,
   EMPLOYEE_STATUS_PASS,
   VOICE_AI_FORM_LINK
 };
